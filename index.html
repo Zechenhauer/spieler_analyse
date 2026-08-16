@@ -282,7 +282,7 @@
             <h1>TV KAPELLEN 1919 e.V.</h1>
             <img src="https://lh3.googleusercontent.com/d/1PB4X2QrrMlaRlajQEWDtJxRP2c6VTsI5" alt="TVK Logo" class="header-logo">
         </div>
-        <div class="subtitle">🎯 Spieler- & Matchup-Analyse (inkl. Gegner-Spieler)</div>
+        <div class="subtitle">🎯 Spieler- & Matchup-Analyse (Einzel & Doppel)</div>
         <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">⚡ Bereitstellung & Datenpflege: Jürgen Schützendorf</div>
     </div>
 
@@ -439,7 +439,8 @@
 
         let idxSpieltag = colIndex("spieltag");
         let idxGegnerTeam = colIndex("gegner mannschaft");
-        let idxGegnerSpieler = colIndex("spieler gegner") !== -1 ? colIndex("spieler gegner") : colIndex("gegner spieler");
+        // Liest die Spalte "Gegner Name" aus deinem Google Sheet
+        let idxGegnerSpieler = colIndex("gegner name") !== -1 ? colIndex("gegner name") : colIndex("spieler gegner");
         let idxBlock = colIndex("block");
         let idxSpieler = colIndex("spieler kapellen");
         let idxErgebnis = colIndex("ergebnis spiel");
@@ -512,7 +513,6 @@
             let matchesTeam = selectedTeam === "ALL" || m.gegnerTeam === selectedTeam;
 
             if (matchesKapellenPlayer && matchesTeam && m.gegnerSpieler) {
-                // Bei Doppel können es zwei Gegner sein (z.B. "Name1 / Name2")
                 let parts = m.gegnerSpieler.split("/").map(p => p.trim());
                 parts.forEach(p => { if (p) oppPlayers.add(p); });
             }
