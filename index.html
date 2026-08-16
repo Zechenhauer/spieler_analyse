@@ -239,20 +239,24 @@
             background: rgba(34, 197, 94, 0.2);
             color: var(--green);
             border: 1px solid rgba(34, 197, 94, 0.4);
-            padding: 2px 6px;
+            padding: 2px 8px;
             border-radius: 4px;
             font-weight: bold;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
+            display: inline-block;
+            text-align: center;
         }
 
         .badge-loss {
             background: rgba(239, 68, 68, 0.2);
             color: var(--red);
             border: 1px solid rgba(239, 68, 68, 0.4);
-            padding: 2px 6px;
+            padding: 2px 8px;
             border-radius: 4px;
             font-weight: bold;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
+            display: inline-block;
+            text-align: center;
         }
 
         .highlight-tag {
@@ -495,10 +499,7 @@
         let idxGegnerSpieler = colIndex("gegner name", "spieler gegner", "gegner spieler", "gegnerspieler");
         let idxBlock = colIndex("block");
         let idxSpieler = colIndex("spieler kapellen", "kapellen spieler", "spieler");
-        
-        // Exakt auf "Ergebnis Spiel" ausrichten, um nicht mit "Endergebnis" zu kollidieren
         let idxErgebnis = colIndex("ergebnis spiel") !== -1 ? colIndex("ergebnis spiel") : colIndex("ergebnis_spiel", "ergebnis_match");
-        
         let idxAvg = colIndex("avg");
         let idxDarts = colIndex("darts");
         let idx180 = colIndex("180er", "180");
@@ -654,7 +655,8 @@
                     isWin = (parseInt(parts[0]) || 0) > (parseInt(parts[1]) || 0);
                 }
 
-                let badge = isWin ? `<span class="badge-win">SIEG</span>` : `<span class="badge-loss">NIEDERLAGE</span>`;
+                // Hier nur 'S' für Sieg und 'N' für Niederlage
+                let badge = isWin ? `<span class="badge-win">S</span>` : `<span class="badge-loss">N</span>`;
                 
                 let highlights = [];
                 if (parseInt(m.r180er) > 0) highlights.push(`<span class="highlight-tag">🎯 ${m.r180er}x 180</span>`);
@@ -704,7 +706,7 @@
         document.getElementById("kpiDoppelHF").textContent = dMaxHf > 0 ? dMaxHf : "-";
         document.getElementById("kpiDoppel180").textContent = dCount180;
 
-        // DOPPEL PARTNER-CARDS (Legs basierend auf Leg-Ergebnissen berechnet)
+        // DOPPEL PARTNER-CARDS
         let doppelPartners = {};
         doppelMatches.forEach(m => {
             let names = m.spieler.split("/").map(n => n.trim());
@@ -772,7 +774,8 @@
                     isWin = (parseInt(parts[0]) || 0) > (parseInt(parts[1]) || 0);
                 }
 
-                let badge = isWin ? `<span class="badge-win">SIEG</span>` : `<span class="badge-loss">NIEDERLAGE</span>`;
+                // Hier nur 'S' für Sieg und 'N' für Niederlage
+                let badge = isWin ? `<span class="badge-win">S</span>` : `<span class="badge-loss">N</span>`;
                 
                 let highlights = [];
                 if (parseInt(m.r180er) > 0) highlights.push(`<span class="highlight-tag">🎯 ${m.r180er}x 180</span>`);
