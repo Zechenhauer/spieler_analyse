@@ -456,6 +456,7 @@
     }
 
     async function fetchAllData() {
+        allMatchesData = [];
         const teamGids = [
             { name: "1. Mannschaft", gid: "2097702849" },
             { name: "2. Mannschaft", gid: "483923517" },
@@ -484,18 +485,21 @@
         if (lines.length < 2) return result;
 
         let headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-        let colIndex = (name) => headers.findIndex(h => h.includes(name.toLowerCase()));
+        
+        let colIndex = (...names) => {
+            return headers.findIndex(h => names.some(n => h.includes(n.toLowerCase())));
+        };
 
         let idxSpieltag = colIndex("spieltag");
-        let idxGegnerTeam = colIndex("gegner mannschaft");
-        let idxGegnerSpieler = colIndex("gegner name") !== -1 ? colIndex("gegner name") : colIndex("spieler gegner");
+        let idxGegnerTeam = colIndex("gegner mannschaft", "gegner team");
+        let idxGegnerSpieler = colIndex("gegner name", "spieler gegner", "gegner spieler", "gegnerspieler");
         let idxBlock = colIndex("block");
-        let idxSpieler = colIndex("spieler kapellen");
-        let idxErgebnis = colIndex("ergebnis spiel");
+        let idxSpieler = colIndex("spieler kapellen", "kapellen spieler", "spieler");
+        let idxErgebnis = colIndex("ergebnis spiel", "ergebnis");
         let idxAvg = colIndex("avg");
         let idxDarts = colIndex("darts");
-        let idx180 = colIndex("180er");
-        let idxHf = colIndex("hf");
+        let idx180 = colIndex("180er", "180");
+        let idxHf = colIndex("hf", "high finish");
 
         for (let i = 1; i < lines.length; i++) {
             let line = lines[i].trim();
@@ -504,7 +508,7 @@
             let cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
             let cleanVal = (idx) => (idx !== -1 && cols[idx]) ? cols[idx].replace(/"/g, '').trim() : "";
 
-            if (cols.length > 4) {
+            if (cols.length > 3) {
                 result.push({
                     team: teamName,
                     spieltag: cleanVal(idxSpieltag),
@@ -525,6 +529,7 @@
 
     function populateOpponentTeamDropdown() {
         const select = document.getElementById("opponentTeamFilter");
+        select.innerHTML = '<option value="ALL">Alle Gegner-Teams</option>';
         let teams = new Set();
         allMatchesData.forEach(m => {
             if (m.gegnerTeam) teams.add(m.gegnerTeam);
@@ -590,7 +595,13 @@
         let playerMatches = allMatchesData.filter(m => {
             let matchesPlayer = m.spieler.toLowerCase().includes(selectedPlayer.toLowerCase());
             let matchesTeam = (selectedTeam === "ALL" || m.gegnerTeam === selectedTeam);
-            let matchesOpponentPlayer = (selectedOpponentPlayer === "ALL" || m.gegnerSpieler.toLowerCase().includes(selectedOpponentPlayer.toLowerCase()));
+            
+            // Flexible Prüfung für Gegner-Spieler (funktioniert sowohl für "ALL" als auch bei konkreter Auswahl)
+            let matchesOpponentPlayer = true;
+            if (selectedOpponentPlayer && selectedOpponentPlayer !== "ALL") {
+                matchesOpponentPlayer = m.gegnerSpieler.toLowerCase().includes(selectedOpponentPlayer.toLowerCase());
+            }
+
             return matchesPlayer && matchesTeam && matchesOpponentPlayer;
         });
 
