@@ -489,21 +489,26 @@
         if (lines.length < 2) return result;
 
         let headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-        
-        let colIndex = (...names) => {
-            return headers.findIndex(h => names.some(n => h.includes(n.toLowerCase())));
-        };
 
-        let idxSpieltag = colIndex("spieltag");
-        let idxGegnerTeam = colIndex("gegner mannschaft", "gegner team");
-        let idxGegnerSpieler = colIndex("gegner name", "spieler gegner", "gegner spieler", "gegnerspieler");
-        let idxBlock = colIndex("block");
-        let idxSpieler = colIndex("spieler kapellen", "kapellen spieler", "spieler");
-        let idxErgebnis = colIndex("ergebnis spiel") !== -1 ? colIndex("ergebnis spiel") : colIndex("ergebnis_spiel", "ergebnis_match");
-        let idxAvg = colIndex("avg");
-        let idxDarts = colIndex("darts");
-        let idx180 = colIndex("180er", "180");
-        let idxHf = colIndex("hf", "high finish");
+        let colIndexExact = (exactName) => headers.findIndex(h => h === exactName.toLowerCase());
+        let colIndexIncludes = (...names) => headers.findIndex(h => names.some(n => h.includes(n.toLowerCase())));
+
+        let idxSpieltag = colIndexIncludes("spieltag");
+        let idxGegnerTeam = colIndexIncludes("gegner mannschaft", "gegner team");
+        let idxGegnerSpieler = colIndexIncludes("gegner name", "spieler gegner", "gegner spieler", "gegnerspieler");
+        let idxBlock = colIndexIncludes("block");
+        let idxSpieler = colIndexIncludes("spieler kapellen", "kapellen spieler", "spieler");
+
+        // Sucht exakt nach "ergebnis spiel", um nicht versehentlich "endergebnis" abzugreifen
+        let idxErgebnis = colIndexExact("ergebnis spiel");
+        if (idxErgebnis === -1) {
+            idxErgebnis = headers.findIndex(h => h.includes("ergebnis") && !h.includes("end"));
+        }
+
+        let idxAvg = colIndexIncludes("avg");
+        let idxDarts = colIndexIncludes("darts");
+        let idx180 = colIndexIncludes("180er", "180");
+        let idxHf = colIndexIncludes("hf", "high finish");
 
         for (let i = 1; i < lines.length; i++) {
             let line = lines[i].trim();
@@ -598,7 +603,7 @@
 
         let playerMatches = allMatchesData.filter(m => {
             let matchesPlayer = m.spieler.toLowerCase().includes(selectedPlayer.toLowerCase());
-            let matchesTeam = (selectedTeam === "ALL" || m.gegnerTeam === selectedTeam);
+            let matchesTeam = (selectedTeam === "ALL" || !selectedTeam || m.gegnerTeam === selectedTeam);
             
             let matchesOpponentPlayer = true;
             if (selectedOpponentPlayer && selectedOpponentPlayer !== "ALL") {
@@ -655,7 +660,6 @@
                     isWin = (parseInt(parts[0]) || 0) > (parseInt(parts[1]) || 0);
                 }
 
-                // Hier nur 'S' für Sieg und 'N' für Niederlage
                 let badge = isWin ? `<span class="badge-win">S</span>` : `<span class="badge-loss">N</span>`;
                 
                 let highlights = [];
@@ -774,7 +778,6 @@
                     isWin = (parseInt(parts[0]) || 0) > (parseInt(parts[1]) || 0);
                 }
 
-                // Hier nur 'S' für Sieg und 'N' für Niederlage
                 let badge = isWin ? `<span class="badge-win">S</span>` : `<span class="badge-loss">N</span>`;
                 
                 let highlights = [];
