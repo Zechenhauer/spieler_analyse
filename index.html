@@ -136,7 +136,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .kpi-card {
@@ -205,7 +205,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 12px;
-            margin-bottom: 30px;
+            margin-bottom: 16px;
         }
 
         .doppel-card {
@@ -313,7 +313,11 @@
     <!-- INHALT / AUSWERTUNG -->
     <div id="analysisContainer" style="display: none;">
         
-        <!-- KPI ÜBERSICHT DES SPIELERS -->
+        <!-- SECTION 1: EINZEL -->
+        <div class="section-title">
+            <span>🎯 Einzel-Auswertung & Matchups</span>
+        </div>
+
         <div class="kpi-grid">
             <div class="kpi-card">
                 <label>Einzel-Matches</label>
@@ -341,10 +345,6 @@
             </div>
         </div>
 
-        <!-- EINZEL-BEGEGNUNGEN ZUERST -->
-        <div class="section-title">
-            <span>🎯 Einzel-Matchup Historie</span>
-        </div>
         <div class="table-responsive">
             <table>
                 <thead>
@@ -364,12 +364,60 @@
             </table>
         </div>
 
-        <!-- DOPPEL-PARTNER ANALYSE DANACH -->
+        <!-- SECTION 2: DOPPEL -->
         <div class="section-title">
-            <span>👥 Doppel-Partner & Bilanzen</span>
+            <span>👥 Doppel-Auswertung & Matchups</span>
         </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <label>Doppel-Matches</label>
+                <div class="val" id="kpiDoppelMatches">0</div>
+            </div>
+            <div class="kpi-card">
+                <label>Doppel-Bilanz</label>
+                <div class="val green" id="kpiDoppelBilanz">0:0</div>
+            </div>
+            <div class="kpi-card">
+                <label>Win-Rate</label>
+                <div class="val cyan" id="kpiDoppelWinRate">0%</div>
+            </div>
+            <div class="kpi-card">
+                <label>Schnitt (AVG)</label>
+                <div class="val cyan" id="kpiDoppelAvg">0.00</div>
+            </div>
+            <div class="kpi-card">
+                <label>High Finish</label>
+                <div class="val" id="kpiDoppelHF">-</div>
+            </div>
+            <div class="kpi-card">
+                <label>180er</label>
+                <div class="val" id="kpiDoppel180">0</div>
+            </div>
+        </div>
+
         <div class="doppel-grid" id="doppelGrid">
-            <!-- Wird dynamisch befüllt -->
+            <!-- Partner-Übersicht wird dynamisch befüllt -->
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Spg.</th>
+                        <th>Gegner Mannschaft</th>
+                        <th>Gegner Doppel</th>
+                        <th>Eigenes Doppel</th>
+                        <th>Ergebnis</th>
+                        <th>AVG</th>
+                        <th>Darts</th>
+                        <th>Highlights</th>
+                    </tr>
+                </thead>
+                <tbody id="doppelTableBody">
+                    <!-- Wird dynamisch befüllt -->
+                </tbody>
+            </table>
         </div>
 
     </div>
@@ -579,12 +627,12 @@
         document.getElementById("kpiHF").textContent = maxHf > 0 ? maxHf : "-";
         document.getElementById("kpi180").textContent = count180;
 
-        // 2. EINZEL-MATCHES TABELLE (NUN OBEN)
-        const tbody = document.getElementById("matchesTableBody");
-        tbody.innerHTML = "";
+        // EINZEL TABELLE
+        const tbodyEinzel = document.getElementById("matchesTableBody");
+        tbodyEinzel.innerHTML = "";
 
         if (einzelMatches.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="no-data">Keine Einzel-Spiele für diese Auswahl gefunden.</td></tr>`;
+            tbodyEinzel.innerHTML = `<tr><td colspan="7" class="no-data">Keine Einzel-Spiele für diese Auswahl gefunden.</td></tr>`;
         } else {
             einzelMatches.forEach(m => {
                 let isWin = false;
@@ -599,25 +647,52 @@
                 if (parseInt(m.r180er) > 0) highlights.push(`<span class="highlight-tag">🎯 ${m.r180er}x 180</span>`);
                 if (parseInt(m.hf) > 0) highlights.push(`<span class="highlight-tag">🔥 HF ${m.hf}</span>`);
 
-                let gegnerSpielerName = m.gegnerSpieler ? m.gegnerSpieler : '-';
-
                 let tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td><b>Spg. ${m.spieltag || '-'}</b></td>
                     <td>${m.gegnerTeam || 'Unbekannt'}</td>
-                    <td class="opponent-player-text">👤 ${gegnerSpielerName}</td>
+                    <td class="opponent-player-text">👤 ${m.gegnerSpieler || '-'}</td>
                     <td>${badge} <strong style="margin-left: 5px;">${m.ergebnis}</strong></td>
                     <td><strong style="color: var(--highlight-cyan);">${m.avg || '0.00'}</strong></td>
                     <td>${m.darts || '-'}</td>
                     <td>${highlights.length > 0 ? highlights.join(" | ") : '-'}</td>
                 `;
-                tbody.appendChild(tr);
+                tbodyEinzel.appendChild(tr);
             });
         }
 
-        // 3. DOPPEL-ANALYSE (NUN UNTEN)
-        let doppelPartners = {};
+        // 2. KPI-BERECHNUNG (DOPPEL)
+        let totalDoppel = doppelMatches.length;
+        let dWins = 0, dLosses = 0, dAvgs = [], dMaxHf = 0, dCount180 = 0;
 
+        doppelMatches.forEach(m => {
+            if (m.ergebnis) {
+                let parts = m.ergebnis.split(":");
+                let g = parseInt(parts[0]) || 0;
+                let v = parseInt(parts[1]) || 0;
+                if (g > v) dWins++; else if (v > g) dLosses++;
+            }
+            let avgVal = parseFloat(m.avg) || 0;
+            if (avgVal > 0) dAvgs.push(avgVal);
+
+            let hf = parseInt(m.hf) || 0;
+            if (hf > dMaxHf) dMaxHf = hf;
+
+            dCount180 += parseInt(m.r180er) || 0;
+        });
+
+        let dWinRate = totalDoppel > 0 ? Math.round((dWins / totalDoppel) * 100) : 0;
+        let dAvgGesamt = dAvgs.length > 0 ? (dAvgs.reduce((a,b)=>a+b,0) / dAvgs.length).toFixed(2) : "0.00";
+
+        document.getElementById("kpiDoppelMatches").textContent = totalDoppel;
+        document.getElementById("kpiDoppelBilanz").textContent = `${dWins}:${dLosses}`;
+        document.getElementById("kpiDoppelWinRate").textContent = `${dWinRate}%`;
+        document.getElementById("kpiDoppelAvg").textContent = dAvgGesamt;
+        document.getElementById("kpiDoppelHF").textContent = dMaxHf > 0 ? dMaxHf : "-";
+        document.getElementById("kpiDoppel180").textContent = dCount180;
+
+        // DOPPEL PARTNER-CARDS
+        let doppelPartners = {};
         doppelMatches.forEach(m => {
             let names = m.spieler.split("/").map(n => n.trim());
             let partner = names.find(n => !n.toLowerCase().includes(selectedPlayer.toLowerCase())) || "Unbekannt";
@@ -656,7 +731,7 @@
                 card.className = "doppel-card";
                 card.innerHTML = `
                     <div class="doppel-partner">
-                        <span>🤝 ${partner}</span>
+                        <span>🤝 Partner: ${partner}</span>
                         <span class="badge-win">${stats.wins}:${stats.losses}</span>
                     </div>
                     <div class="doppel-stats">
@@ -667,6 +742,41 @@
                     </div>
                 `;
                 doppelGrid.appendChild(card);
+            });
+        }
+
+        // DOPPEL TABELLE
+        const tbodyDoppel = document.getElementById("doppelTableBody");
+        tbodyDoppel.innerHTML = "";
+
+        if (doppelMatches.length === 0) {
+            tbodyDoppel.innerHTML = `<tr><td colspan="8" class="no-data">Keine Doppel-Spiele für diese Auswahl gefunden.</td></tr>`;
+        } else {
+            doppelMatches.forEach(m => {
+                let isWin = false;
+                if (m.ergebnis) {
+                    let parts = m.ergebnis.split(":");
+                    isWin = (parseInt(parts[0]) || 0) > (parseInt(parts[1]) || 0);
+                }
+
+                let badge = isWin ? `<span class="badge-win">SIEG</span>` : `<span class="badge-loss">NIEDERLAGE</span>`;
+                
+                let highlights = [];
+                if (parseInt(m.r180er) > 0) highlights.push(`<span class="highlight-tag">🎯 ${m.r180er}x 180</span>`);
+                if (parseInt(m.hf) > 0) highlights.push(`<span class="highlight-tag">🔥 HF ${m.hf}</span>`);
+
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><b>Spg. ${m.spieltag || '-'}</b></td>
+                    <td>${m.gegnerTeam || 'Unbekannt'}</td>
+                    <td class="opponent-player-text">👥 ${m.gegnerSpieler || '-'}</td>
+                    <td>👥 ${m.spieler || '-'}</td>
+                    <td>${badge} <strong style="margin-left: 5px;">${m.ergebnis}</strong></td>
+                    <td><strong style="color: var(--highlight-cyan);">${m.avg || '0.00'}</strong></td>
+                    <td>${m.darts || '-'}</td>
+                    <td>${highlights.length > 0 ? highlights.join(" | ") : '-'}</td>
+                `;
+                tbodyDoppel.appendChild(tr);
             });
         }
     }
