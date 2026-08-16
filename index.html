@@ -76,6 +76,31 @@
             margin-top: 4px;
         }
 
+        /* Refresh Button */
+        .btn-refresh {
+            background-color: var(--card-bg);
+            color: var(--highlight-cyan);
+            border: 1px solid var(--accent-blue);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            margin-top: 12px;
+        }
+
+        .btn-refresh:hover {
+            background-color: var(--accent-blue);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-refresh:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         /* Filter & Controls */
         .controls-card {
             background: var(--card-bg);
@@ -287,7 +312,14 @@
             <img src="https://lh3.googleusercontent.com/d/1PB4X2QrrMlaRlajQEWDtJxRP2c6VTsI5" alt="TVK Logo" class="header-logo">
         </div>
         <div class="subtitle">🎯 Spieler- & Matchup-Analyse (Einzel & Doppel)</div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">⚡ Bereitstellung & Datenpflege: Jürgen Schützendorf</div>
+        
+        <div>
+            <button id="refreshBtn" onclick="refreshData()" class="btn-refresh">
+                🔄 Daten jetzt aktualisieren
+            </button>
+        </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">⚡ Bereitstellung & Datenpflege: Jürgen Schützendorf</div>
     </div>
 
     <!-- FILTER & SELEKTION -->
@@ -483,6 +515,27 @@
         }
     }
 
+    async function refreshData() {
+        const btn = document.getElementById("refreshBtn");
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = "⏳ Lade Daten...";
+        }
+
+        await fetchAllData();
+        populateOpponentTeamDropdown();
+        updateOpponentPlayerDropdown();
+        analyzePlayer();
+
+        if (btn) {
+            btn.innerHTML = "✅ Aktuell!";
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = "🔄 Daten jetzt aktualisieren";
+            }, 1500);
+        }
+    }
+
     function parseCSV(text, teamName) {
         let lines = text.split("\n");
         let result = [];
@@ -499,7 +552,6 @@
         let idxBlock = colIndexIncludes("block");
         let idxSpieler = colIndexIncludes("spieler kapellen", "kapellen spieler", "spieler");
 
-        // Sucht exakt nach "ergebnis spiel", um nicht versehentlich "endergebnis" abzugreifen
         let idxErgebnis = colIndexExact("ergebnis spiel");
         if (idxErgebnis === -1) {
             idxErgebnis = headers.findIndex(h => h.includes("ergebnis") && !h.includes("end"));
