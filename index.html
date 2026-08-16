@@ -495,7 +495,10 @@
         let idxGegnerSpieler = colIndex("gegner name", "spieler gegner", "gegner spieler", "gegnerspieler");
         let idxBlock = colIndex("block");
         let idxSpieler = colIndex("spieler kapellen", "kapellen spieler", "spieler");
-        let idxErgebnis = colIndex("ergebnis spiel", "ergebnis");
+        
+        // Exakt auf "Ergebnis Spiel" ausrichten, um nicht mit "Endergebnis" zu kollidieren
+        let idxErgebnis = colIndex("ergebnis spiel") !== -1 ? colIndex("ergebnis spiel") : colIndex("ergebnis_spiel", "ergebnis_match");
+        
         let idxAvg = colIndex("avg");
         let idxDarts = colIndex("darts");
         let idx180 = colIndex("180er", "180");
@@ -596,7 +599,6 @@
             let matchesPlayer = m.spieler.toLowerCase().includes(selectedPlayer.toLowerCase());
             let matchesTeam = (selectedTeam === "ALL" || m.gegnerTeam === selectedTeam);
             
-            // Flexible Prüfung für Gegner-Spieler (funktioniert sowohl für "ALL" als auch bei konkreter Auswahl)
             let matchesOpponentPlayer = true;
             if (selectedOpponentPlayer && selectedOpponentPlayer !== "ALL") {
                 matchesOpponentPlayer = m.gegnerSpieler.toLowerCase().includes(selectedOpponentPlayer.toLowerCase());
@@ -702,7 +704,7 @@
         document.getElementById("kpiDoppelHF").textContent = dMaxHf > 0 ? dMaxHf : "-";
         document.getElementById("kpiDoppel180").textContent = dCount180;
 
-        // DOPPEL PARTNER-CARDS
+        // DOPPEL PARTNER-CARDS (Legs basierend auf Leg-Ergebnissen berechnet)
         let doppelPartners = {};
         doppelMatches.forEach(m => {
             let names = m.spieler.split("/").map(n => n.trim());
