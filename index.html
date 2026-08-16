@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Kapellen 1919 e.V. — Spieler- & Match-Analyse</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --accent-orange: #f59e0b;
+            --accent-blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --green: #22c55e;
+            --red: #ef4444;
+            --gold: #facc15;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 950px;
+        }
+
+        .header-box {
+            text-align: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .title-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .header-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: contain;
+            border: 2px solid var(--accent-orange);
+            background: #0f172a;
+            padding: 3px;
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--accent-orange);
+            font-size: 1.6rem;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Filter & Controls */
+        .controls-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 800px) {
+            .controls-card { grid-template-columns: 1fr; }
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--accent-orange);
+            font-weight: bold;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-orange);
+        }
+
+        /* Stats & Sektionen */
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--accent-orange);
+            margin: 25px 0 12px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-left: 4px solid var(--accent-orange);
+            padding-left: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .kpi-card label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .kpi-card .val {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .kpi-card .val.gold { color: var(--gold); }
+        .kpi-card .val.green { color: var(--green); }
+
+        /* Doppel-Karten Grid */
+        .doppel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .doppel-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .doppel-partner {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .doppel-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.6);
+            padding: 8px 10px;
+            border-radius: 6px;
+        }
+
+        /* Match-Liste Table */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th {
+            background: #0f172a;
+            color: var(--text-muted);
+            padding: 10px 12px;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+
+        .badge-win {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--green);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        .badge-loss {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        .highlight-tag {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .no-data {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .opponent-player-text {
+            color: var(--accent-orange);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-box">
+        <div class="title-row">
+            <img src="https://lh3.googleusercontent.com/d/1PB4X2QrrMlaRlajQEWDtJxRP2c6VTsI5" alt="TVK Logo" class="header-logo">
+            <h1>TV KAPELLEN 1919 e.V.</h1>
+            <img src="https://lh3.googleusercontent.com/d/1PB4X2QrrMlaRlajQEWDtJxRP2c6VTsI5" alt="TVK Logo" class="header-logo">
+        </div>
+        <div class="subtitle">🎯 Spieler- & Matchup-Analyse (inkl. Gegner-Spieler)</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">⚡ Bereitstellung & Datenpflege: Jürgen Schützendorf</div>
+    </div>
+
+    <!-- FILTER & SELEKTION -->
+    <div class="controls-card">
+        <div class="form-group">
+            <label for="playerSelect">1. Kapellen Spieler:</label>
+            <select id="playerSelect" class="form-control" onchange="onPlayerOrTeamChange()">
+                <option value="">-- Spieler wählen --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="opponentTeamFilter">2. Gegner-Team:</label>
+            <select id="opponentTeamFilter" class="form-control" onchange="onTeamFilterChange()">
+                <option value="ALL">Alle Gegner-Teams</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="opponentPlayerFilter">3. Gegner-Spieler:</label>
+            <select id="opponentPlayerFilter" class="form-control" onchange="analyzePlayer()">
+                <option value="ALL">Alle Gegner-Spieler</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- INHALT / AUSWERTUNG -->
+    <div id="analysisContainer" style="display: none;">
+        
+        <!-- KPI ÜBERSICHT DES SPIELERS -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <label>Einzel-Matches</label>
+                <div class="val" id="kpiMatches">0</div>
+            </div>
+            <div class="kpi-card">
+                <label>Einzel-Bilanz</label>
+                <div class="val green" id="kpiBilanz">0:0</div>
+            </div>
+            <div class="kpi-card">
+                <label>Win-Rate</label>
+                <div class="val gold" id="kpiWinRate">0%</div>
+            </div>
+            <div class="kpi-card">
+                <label>Schnitt (AVG)</label>
+                <div class="val gold" id="kpiAvg">0.00</div>
+            </div>
+            <div class="kpi-card">
+                <label>High Finish</label>
+                <div class="val" id="kpiHF">-</div>
+            </div>
+            <div class="kpi-card">
+                <label>180er</label>
+                <div class="val" id="kpi180">0</div>
+            </div>
+        </div>
+
+        <!-- DOPPEL-PARTNER ANALYSE -->
+        <div class="section-title">
+            <span>👥 Doppel-Partner & Bilanzen</span>
+        </div>
+        <div class="doppel-grid" id="doppelGrid">
+            <!-- Wird dynamisch befüllt -->
+        </div>
+
+        <!-- EINZEL-BEGEGNUNGEN -->
+        <div class="section-title">
+            <span>🎯 Einzel-Matchup Historie</span>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Spg.</th>
+                        <th>Gegner Mannschaft</th>
+                        <th>Gegner Spieler</th>
+                        <th>Ergebnis</th>
+                        <th>AVG</th>
+                        <th>Darts</th>
+                        <th>Highlights</th>
+                    </tr>
+                </thead>
+                <tbody id="matchesTableBody">
+                    <!-- Wird dynamisch befüllt -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const playersList = [
+        "Jürgen Schützendorf", "Niklas Weichert", "Wolfram Senger", "Ludger Schledorn", 
+        "Dominik Helmke", "Thomas Kliver", "Markus Ginsel", "Andreas Denner", 
+        "Markus Lenz", "Florian Hartwich", "Michael Müller", "Lars Neutag",
+        "Patrick Seitz", "Tim Siegel", "Sascha Bien", "Stefan Melcher", "Jan Krabbe",
+        "Fabio Padovano", "Dirk Kraus", "Robert Geyer", "Daniel Simanowitz", "Danny Voß",
+        "Markus Elgersma", "Markus Thiele", "Christian Schreiber", "Dominik Herz",
+        "Thomas Franzen", "Philip Möller", "Holger Weberpold", "Britta Roghmans",
+        "Scott Jonen", "Björn Mentzen", "Lars Hufen", "Jesper Neutag", "Brian Müller",
+        "Leon Overmann", "Lucas Mentzen"
+    ];
+
+    let allMatchesData = [];
+
+    window.onload = async function() {
+        populatePlayerDropdown();
+        await fetchAllData();
+        populateOpponentTeamDropdown();
+        updateOpponentPlayerDropdown();
+    };
+
+    function populatePlayerDropdown() {
+        const select = document.getElementById("playerSelect");
+        playersList.sort().forEach(p => {
+            let opt = document.createElement("option");
+            opt.value = p;
+            opt.textContent = p;
+            select.appendChild(opt);
+        });
+    }
+
+    async function fetchAllData() {
+        const teamGids = [
+            { name: "1. Mannschaft", gid: "2097702849" },
+            { name: "2. Mannschaft", gid: "483923517" },
+            { name: "3. Mannschaft", gid: "0" },
+            { name: "4. Mannschaft", gid: "1132963048" }
+        ];
+
+        for (const team of teamGids) {
+            const cacheBuster = new Date().getTime() + "_" + Math.random();
+            const csvUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vTdTOUA5sqMlTVxxUZWLn-ce3HNDvCbLfmLZIgT7EKJ0tYAT3OqZhx3T_BMvpgIwU5tDUxmjvUIRbHz/pub?output=csv&gid=${team.gid}&cb=` + cacheBuster;
+
+            try {
+                const response = await fetch(csvUrl, { cache: "no-store" });
+                const csvText = await response.text();
+                const parsed = parseCSV(csvText, team.name);
+                allMatchesData = allMatchesData.concat(parsed);
+            } catch (err) {
+                console.log(`Fehler beim Laden von ${team.name}:`, err);
+            }
+        }
+    }
+
+    function parseCSV(text, teamName) {
+        let lines = text.split("\n");
+        let result = [];
+        if (lines.length < 2) return result;
+
+        let headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+        let colIndex = (name) => headers.findIndex(h => h.includes(name.toLowerCase()));
+
+        let idxSpieltag = colIndex("spieltag");
+        let idxGegnerTeam = colIndex("gegner mannschaft");
+        let idxGegnerSpieler = colIndex("spieler gegner") !== -1 ? colIndex("spieler gegner") : colIndex("gegner spieler");
+        let idxBlock = colIndex("block");
+        let idxSpieler = colIndex("spieler kapellen");
+        let idxErgebnis = colIndex("ergebnis spiel");
+        let idxAvg = colIndex("avg");
+        let idxDarts = colIndex("darts");
+        let idx180 = colIndex("180er");
+        let idxHf = colIndex("hf");
+
+        for (let i = 1; i < lines.length; i++) {
+            let line = lines[i].trim();
+            if (!line) continue;
+            
+            let cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            let cleanVal = (idx) => (idx !== -1 && cols[idx]) ? cols[idx].replace(/"/g, '').trim() : "";
+
+            if (cols.length > 4) {
+                result.push({
+                    team: teamName,
+                    spieltag: cleanVal(idxSpieltag),
+                    gegnerTeam: cleanVal(idxGegnerTeam),
+                    gegnerSpieler: cleanVal(idxGegnerSpieler),
+                    block: cleanVal(idxBlock),
+                    spieler: cleanVal(idxSpieler),
+                    ergebnis: cleanVal(idxErgebnis),
+                    avg: cleanVal(idxAvg),
+                    darts: cleanVal(idxDarts),
+                    r180er: cleanVal(idx180),
+                    hf: cleanVal(idxHf)
+                });
+            }
+        }
+        return result;
+    }
+
+    function populateOpponentTeamDropdown() {
+        const select = document.getElementById("opponentTeamFilter");
+        let teams = new Set();
+        allMatchesData.forEach(m => {
+            if (m.gegnerTeam) teams.add(m.gegnerTeam);
+        });
+
+        Array.from(teams).sort().forEach(t => {
+            let opt = document.createElement("option");
+            opt.value = t;
+            opt.textContent = t;
+            select.appendChild(opt);
+        });
+    }
+
+    function onTeamFilterChange() {
+        updateOpponentPlayerDropdown();
+        analyzePlayer();
+    }
+
+    function onPlayerOrTeamChange() {
+        updateOpponentPlayerDropdown();
+        analyzePlayer();
+    }
+
+    function updateOpponentPlayerDropdown() {
+        const selectedPlayer = document.getElementById("playerSelect").value;
+        const selectedTeam = document.getElementById("opponentTeamFilter").value;
+        const select = document.getElementById("opponentPlayerFilter");
+
+        select.innerHTML = '<option value="ALL">Alle Gegner-Spieler</option>';
+
+        let oppPlayers = new Set();
+        allMatchesData.forEach(m => {
+            let matchesKapellenPlayer = !selectedPlayer || m.spieler.toLowerCase().includes(selectedPlayer.toLowerCase());
+            let matchesTeam = selectedTeam === "ALL" || m.gegnerTeam === selectedTeam;
+
+            if (matchesKapellenPlayer && matchesTeam && m.gegnerSpieler) {
+                // Bei Doppel können es zwei Gegner sein (z.B. "Name1 / Name2")
+                let parts = m.gegnerSpieler.split("/").map(p => p.trim());
+                parts.forEach(p => { if (p) oppPlayers.add(p); });
+            }
+        });
+
+        Array.from(oppPlayers).sort().forEach(p => {
+            let opt = document.createElement("option");
+            opt.value = p;
+            opt.textContent = p;
+            select.appendChild(opt);
+        });
+    }
+
+    function analyzePlayer() {
+        const selectedPlayer = document.getElementById("playerSelect").value;
+        const selectedTeam = document.getElementById("opponentTeamFilter").value;
+        const selectedOpponentPlayer = document.getElementById("opponentPlayerFilter").value;
+        const container = document.getElementById("analysisContainer");
+
+        if (!selectedPlayer) {
+            container.style.display = "none";
+            return;
+        }
+
+        container.style.display = "block";
+
+        // Filter für ausgewählten Kapellen-Spieler + Gegner-Team + Gegner-Spieler
+        let playerMatches = allMatchesData.filter(m => {
+            let matchesPlayer = m.spieler.toLowerCase().includes(selectedPlayer.toLowerCase());
+            let matchesTeam = (selectedTeam === "ALL" || m.gegnerTeam === selectedTeam);
+            let matchesOpponentPlayer = (selectedOpponentPlayer === "ALL" || m.gegnerSpieler.toLowerCase().includes(selectedOpponentPlayer.toLowerCase()));
+            return matchesPlayer && matchesTeam && matchesOpponentPlayer;
+        });
+
+        // TRENUNG IN EINZEL UND DOPPEL
+        let einzelMatches = playerMatches.filter(m => !m.block.toLowerCase().includes("doppel"));
+        let doppelMatches = playerMatches.filter(m => m.block.toLowerCase().includes("doppel"));
+
+        // 1. KPI-BERECHNUNG (EINZEL)
+        let totalEinzel = einzelMatches.length;
+        let wins = 0, losses = 0, avgs = [], maxHf = 0, count180 = 0;
+
+        einzelMatches.forEach(m => {
+            if (m.ergebnis) {
+                let parts = m.ergebnis.split(":");
+                let g = parseInt(parts[0]) || 0;
+                let v = parseInt(parts[1]) || 0;
+                if (g > v) wins++; else if (v > g) losses++;
+            }
+            let avgVal = parseFloat(m.avg) || 0;
+            if (avgVal > 0) avgs.push(avgVal);
+
+            let hf = parseInt(m.hf) || 0;
+            if (hf > maxHf) maxHf = hf;
+
+            count180 += parseInt(m.r180er) || 0;
+        });
+
+        let winRate = totalEinzel > 0 ? Math.round((wins / totalEinzel) * 100) : 0;
+        let avgGesamt = avgs.length > 0 ? (avgs.reduce((a,b)=>a+b,0) / avgs.length).toFixed(2) : "0.00";
+
+        document.getElementById("kpiMatches").textContent = totalEinzel;
+        document.getElementById("kpiBilanz").textContent = `${wins}:${losses}`;
+        document.getElementById("kpiWinRate").textContent = `${winRate}%`;
+        document.getElementById("kpiAvg").textContent = avgGesamt;
+        document.getElementById("kpiHF").textContent = maxHf > 0 ? maxHf : "-";
+        document.getElementById("kpi180").textContent = count180;
+
+        // 2. DOPPEL-ANALYSE
+        let doppelPartners = {};
+
+        doppelMatches.forEach(m => {
+            let names = m.spieler.split("/").map(n => n.trim());
+            let partner = names.find(n => !n.toLowerCase().includes(selectedPlayer.toLowerCase())) || "Unbekannt";
+
+            if (!doppelPartners[partner]) {
+                doppelPartners[partner] = { matches: 0, wins: 0, losses: 0, legsWon: 0, legsLost: 0, avgs: [] };
+            }
+
+            let pStats = doppelPartners[partner];
+            pStats.matches++;
+
+            if (m.ergebnis) {
+                let parts = m.ergebnis.split(":");
+                let g = parseInt(parts[0]) || 0;
+                let v = parseInt(parts[1]) || 0;
+                pStats.legsWon += g;
+                pStats.legsLost += v;
+                if (g > v) pStats.wins++; else if (v > g) pStats.losses++;
+            }
+
+            let avgVal = parseFloat(m.avg) || 0;
+            if (avgVal > 0) pStats.avgs.push(avgVal);
+        });
+
+        const doppelGrid = document.getElementById("doppelGrid");
+        doppelGrid.innerHTML = "";
+
+        if (Object.keys(doppelPartners).length === 0) {
+            doppelGrid.innerHTML = `<div class="no-data" style="grid-column: 1/-1;">Keine Doppel-Einsätze gefunden.</div>`;
+        } else {
+            Object.entries(doppelPartners).forEach(([partner, stats]) => {
+                let pWinRate = Math.round((stats.wins / stats.matches) * 100);
+                let pAvg = stats.avgs.length > 0 ? (stats.avgs.reduce((a,b)=>a+b,0) / stats.avgs.length).toFixed(2) : "0.00";
+
+                let card = document.createElement("div");
+                card.className = "doppel-card";
+                card.innerHTML = `
+                    <div class="doppel-partner">
+                        <span>🤝 ${partner}</span>
+                        <span class="badge-win">${stats.wins}:${stats.losses}</span>
+                    </div>
+                    <div class="doppel-stats">
+                        <span>Spiele: <b>${stats.matches}</b></span>
+                        <span>Legs: <b>${stats.legsWon}:${stats.legsLost}</b></span>
+                        <span>Win-Rate: <b style="color:var(--gold);">${pWinRate}%</b></span>
+                        <span>Avg: <b style="color:var(--gold);">${pAvg}</b></span>
+                    </div>
+                `;
+                doppelGrid.appendChild(card);
+            });
+        }
+
+        // 3. EINZEL-MATCHES TABELLE
+        const tbody = document.getElementById("matchesTableBody");
+        tbody.innerHTML = "";
+
+        if (einzelMatches.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="no-data">Keine Einzel-Spiele für diese Auswahl gefunden.</td></tr>`;
+        } else {
+            einzelMatches.forEach(m => {
+                let isWin = false;
+                if (m.ergebnis) {
+                    let parts = m.ergebnis.split(":");
+                    isWin = (parseInt(parts[0]) || 0) > (parseInt(parts[1]) || 0);
+                }
+
+                let badge = isWin ? `<span class="badge-win">SIEG</span>` : `<span class="badge-loss">NIEDERLAGE</span>`;
+                
+                let highlights = [];
+                if (parseInt(m.r180er) > 0) highlights.push(`<span class="highlight-tag">🎯 ${m.r180er}x 180</span>`);
+                if (parseInt(m.hf) > 0) highlights.push(`<span class="highlight-tag">🔥 HF ${m.hf}</span>`);
+
+                let gegnerSpielerName = m.gegnerSpieler ? m.gegnerSpieler : '-';
+
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><b>Spg. ${m.spieltag || '-'}</b></td>
+                    <td>${m.gegnerTeam || 'Unbekannt'}</td>
+                    <td class="opponent-player-text">👤 ${gegnerSpielerName}</td>
+                    <td>${badge} <strong style="margin-left: 5px;">${m.ergebnis}</strong></td>
+                    <td><strong style="color: var(--gold);">${m.avg || '0.00'}</strong></td>
+                    <td>${m.darts || '-'}</td>
+                    <td>${highlights.length > 0 ? highlights.join(" | ") : '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
