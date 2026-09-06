@@ -76,7 +76,6 @@
             margin-top: 4px;
         }
 
-        /* Refresh Button */
         .btn-refresh {
             background-color: var(--card-bg);
             color: var(--highlight-cyan);
@@ -101,7 +100,6 @@
             cursor: not-allowed;
         }
 
-        /* Filter & Controls */
         .controls-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -142,7 +140,6 @@
             border-color: var(--accent-blue);
         }
 
-        /* Stats & Sektionen */
         .section-title {
             font-size: 1.1rem;
             font-weight: 800;
@@ -190,7 +187,6 @@
         .kpi-card .val.cyan { color: var(--highlight-cyan); }
         .kpi-card .val.green { color: var(--green); }
 
-        /* Match-Liste Table */
         .table-responsive {
             overflow-x: auto;
             border-radius: 12px;
@@ -225,7 +221,6 @@
         tr:last-child td { border-bottom: none; }
         tr:hover { background: rgba(255,255,255,0.02); }
 
-        /* Doppel-Karten Grid */
         .doppel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -460,18 +455,30 @@
 </div>
 
 <script>
-    const playersList = [
-        "Jürgen Schützendorf", "Niklas Weichert", "Wolfram Senger", "Ludger Schledorn", 
-        "Dominik Helmke", "Thomas Kliver", "Markus Ginsel", "Andreas Denner", 
-        "Markus Lenz", "Florian Hartwich", "Michael Müller", "Lars Neutag",
-        "Patrick Seitz", "Tim Siegel", "Sascha Bien", "Stefan Melcher", "Jan Krabbe",
-        "Fabio Padovano", "Dirk Kraus", "Robert Geyer", "Daniel Simanowitz", "Danny Voß",
-        "Markus Elgersma", "Markus Thiele", "Christian Schreiber", "Dominik Herz",
-        "Thomas Franzen", "Philip Möller", "Holger Weberpold", "Britta Roghmans",
-        "Scott Jonen", "Björn Mentzen", "Lars Hufen", "Jesper Neutag", "Brian Müller",
-        "Leon Overmann", "Lucas Mentzen", "Mark Bock", "Dirk Grunert", "Friedhelm Schmidt-Cremer", 
-        "Denis Vanzidler", "Joel Wielinski", "Florian Weindorf"
-    ];
+    // Exakte Team-Zuordnung nach deinen Angaben (ohne Pass-Nummern und TC-Zusätze)
+    const teamsData = {
+        "1. Mannschaft": [
+            "Joel Wielinski", "Jan Krabbe", "Dominik Helmke", "Denis Vanzidler", 
+            "Tim Siegel", "Patrik Seitz", "Robert Geyer", "Fabio Padovano", 
+            "Dirk Kraus", "Stefan Melcher", "Sascha Bien"
+        ],
+        "2. Mannschaft": [
+            "Dominik Herz", "Daniel Simanowitz", "Thomas Franzen", "Markus Elgersma", 
+            "Holger Weberpold", "Danny Voß", "Markus Thiele", "Philip Möller", 
+            "Christian Schreiber", "Andre Pogoda", "Florian Weindorf"
+        ],
+        "3. Mannschaft": [
+            "Jürgen Schützendorf", "Wolfram Senger", "Michael Müller", "Ludger Schledorn", 
+            "Markus Ginsel", "Niklas Weichert", "Thomas Kliver", "Lars Neutag", 
+            "Markus Lenz", "Andreas Denner", "Florian Hartwich", "Yannick Steffes", 
+            "Gregor Marek", "Leon Gerber"
+        ],
+        "4. Mannschaft": [
+            "Friedhelm Schmidt-Cremer", "Scott Jonen", "Britta Roghmans", "Dirk Grunert", 
+            "Mark Bock", "Leon Overmann", "Brian Müller", "Jesper Neutag", 
+            "Björn Mentzen", "Lucas Mentzen", "Lars Hufen"
+        ]
+    };
 
     let allMatchesData = [];
 
@@ -484,11 +491,21 @@
 
     function populatePlayerDropdown() {
         const select = document.getElementById("playerSelect");
-        playersList.sort().forEach(p => {
-            let opt = document.createElement("option");
-            opt.value = p;
-            opt.textContent = p;
-            select.appendChild(opt);
+        select.innerHTML = '<option value="">-- Spieler wählen --</option>';
+
+        Object.entries(teamsData).forEach(([teamName, players]) => {
+            let optgroup = document.createElement("optgroup");
+            optgroup.label = teamName;
+
+            // Spieler innerhalb der Mannschaft alphabetisch sortieren
+            [...players].sort().forEach(p => {
+                let opt = document.createElement("option");
+                opt.value = p;
+                opt.textContent = p;
+                optgroup.appendChild(opt);
+            });
+
+            select.appendChild(optgroup);
         });
     }
 
