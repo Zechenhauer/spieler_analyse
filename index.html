@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TV Kapellen 1919 e.V. — Spieler- & Match-Analyse</title>
+    <title>TV Kapellen 1919 e.V. — Spieler- & Match-Analyse (Supabase)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -306,7 +307,7 @@
             <h1>TV KAPELLEN 1919 e.V.</h1>
             <img src="https://lh3.googleusercontent.com/d/1PB4X2QrrMlaRlajQEWDtJxRP2c6VTsI5" alt="TVK Logo" class="header-logo">
         </div>
-        <div class="subtitle">🎯 Spieler- & Matchup-Analyse (Einzel & Doppel)</div>
+        <div class="subtitle">🎯 Spieler- & Matchup-Analyse (Supabase Live)</div>
         
         <div>
             <button id="refreshBtn" onclick="refreshData()" class="btn-refresh">
@@ -455,7 +456,10 @@
 </div>
 
 <script>
-    // Exakte Team-Zuordnung nach deinen Angaben (ohne Pass-Nummern und TC-Zusätze)
+    const SUPABASE_URL = 'https://lhusylpjnujlqomougmg.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_yXEueWILvAq-Vm2VfTuYyg_BIQeE1KK';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const teamsData = {
         "1. Mannschaft": [
             "Joel Wielinski", "Jan Krabbe", "Dominik Helmke", "Denis Vanzidler", 
@@ -497,7 +501,6 @@
             let optgroup = document.createElement("optgroup");
             optgroup.label = teamName;
 
-            // Spieler innerhalb der Mannschaft alphabetisch sortieren
             [...players].sort().forEach(p => {
                 let opt = document.createElement("option");
                 opt.value = p;
@@ -511,24 +514,48 @@
 
     async function fetchAllData() {
         allMatchesData = [];
-        const teamGids = [
-            { name: "1. Mannschaft", gid: "2097702849" },
-            { name: "2. Mannschaft", gid: "483923517" },
-            { name: "3. Mannschaft", gid: "0" },
-            { name: "4. Mannschaft", gid: "1132963048" }
+        
+        // Definition der Team-Tabellen in Supabase
+        const teamsMapping = [
+            { name: "1. Mannschaft", spieltageTable: "spieltage_t1", matchesTable: "matches_t1", scoringTable: "scoring_stats_t1" },
+            { name: "2. Mannschaft", spieltageTable: "spieltage_t2", matchesTable: "matches_t2", scoringTable: "scoring_stats_t2" },
+            { name: "3. Mannschaft", spieltageTable: "spieltage", matchesTable: "matches", scoringTable: "scoring_stats" },
+            { name: "4. Mannschaft", spieltageTable: "spieltage_t4", matchesTable: "matches_t4", scoringTable: "scoring_stats_t4" }
         ];
 
-        for (const team of teamGids) {
-            const cacheBuster = new Date().getTime() + "_" + Math.random();
-            const csvUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vTdTOUA5sqMlTVxxUZWLn-ce3HNDvCbLfmLZIgT7EKJ0tYAT3OqZhx3T_BMvpgIwU5tDUxmjvUIRbHz/pub?output=csv&gid=${team.gid}&cb=` + cacheBuster;
-
+        for (const t of teamsMapping) {
             try {
-                const response = await fetch(csvUrl, { cache: "no-store" });
-                const csvText = await response.text();
-                const parsed = parseCSV(csvText, team.name);
-                allMatchesData = allMatchesData.concat(parsed);
+                const { data, error } = await supabaseClient
+                    .from(t.spieltageTable)
+                    .select(`*, ${t.matchesTable} (*, ${t.scoringTable} (*))`)
+                    .order('spieltag_nummer', { ascending: false });
+
+                if (error) throw error;
+
+                if (data) {
+                    data.forEach(st => {
+                        let matches = st[t.matchesTable] || [];
+                        matches.forEach(m => {
+                            let scoring = (m[t.scoringTable] && m[t.scoringTable].length > 0) ? m[t.scoringTable][0] : {};
+                            
+                            allMatchesData.push({
+                                team: t.name,
+                                spieltag: st.spieltag_nummer || "",
+                                gegnerTeam: st.gegner_team || "",
+                                gegnerSpieler: m.gegner_name || "",
+                                block: m.block_name || "",
+                                spieler: m.spieler_kapellen || "",
+                                ergebnis: m.ergebnis || "",
+                                avg: m.avg || "",
+                                darts: m.darts || "",
+                                r180er: scoring.score_180 || 0,
+                                hf: scoring.high_finish || 0
+                            });
+                        });
+                    });
+                }
             } catch (err) {
-                console.log(`Fehler beim Laden von ${team.name}:`, err);
+                console.log(`Fehler beim Laden von ${t.name} aus Supabase:`, err);
             }
         }
     }
@@ -552,58 +579,6 @@
                 btn.innerHTML = "🔄 Daten jetzt aktualisieren";
             }, 1500);
         }
-    }
-
-    function parseCSV(text, teamName) {
-        let lines = text.split("\n");
-        let result = [];
-        if (lines.length < 2) return result;
-
-        let headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-
-        let colIndexExact = (exactName) => headers.findIndex(h => h === exactName.toLowerCase());
-        let colIndexIncludes = (...names) => headers.findIndex(h => names.some(n => h.includes(n.toLowerCase())));
-
-        let idxSpieltag = colIndexIncludes("spieltag");
-        let idxGegnerTeam = colIndexIncludes("gegner mannschaft", "gegner team");
-        let idxGegnerSpieler = colIndexIncludes("gegner name", "spieler gegner", "gegner spieler", "gegnerspieler");
-        let idxBlock = colIndexIncludes("block");
-        let idxSpieler = colIndexIncludes("spieler kapellen", "kapellen spieler", "spieler");
-
-        let idxErgebnis = colIndexExact("ergebnis spiel");
-        if (idxErgebnis === -1) {
-            idxErgebnis = headers.findIndex(h => h.includes("ergebnis") && !h.includes("end"));
-        }
-
-        let idxAvg = colIndexIncludes("avg");
-        let idxDarts = colIndexIncludes("darts");
-        let idx180 = colIndexIncludes("180er", "180");
-        let idxHf = colIndexIncludes("hf", "high finish");
-
-        for (let i = 1; i < lines.length; i++) {
-            let line = lines[i].trim();
-            if (!line) continue;
-            
-            let cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            let cleanVal = (idx) => (idx !== -1 && cols[idx]) ? cols[idx].replace(/"/g, '').trim() : "";
-
-            if (cols.length > 3) {
-                result.push({
-                    team: teamName,
-                    spieltag: cleanVal(idxSpieltag),
-                    gegnerTeam: cleanVal(idxGegnerTeam),
-                    gegnerSpieler: cleanVal(idxGegnerSpieler),
-                    block: cleanVal(idxBlock),
-                    spieler: cleanVal(idxSpieler),
-                    ergebnis: cleanVal(idxErgebnis),
-                    avg: cleanVal(idxAvg),
-                    darts: cleanVal(idxDarts),
-                    r180er: cleanVal(idx180),
-                    hf: cleanVal(idxHf)
-                });
-            }
-        }
-        return result;
     }
 
     function populateOpponentTeamDropdown() {
